@@ -1,7 +1,9 @@
 [project]
-name = "depshield"
+name = "vulnremedy"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI-powered vulnerability remediation platform"
 readme = "README.md"
 requires-python = ">=3.11.9"
+[tool.hatch.build.targets.wheel]
+packages = ["src/vulnremedy"] 
 dependencies = []
