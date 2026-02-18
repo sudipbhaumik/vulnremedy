@@ -1,13 +1,33 @@
-# Python-generated files
+# Environment — never commit real secrets
+.env
+.venv/
 __pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
+*.pyc
+*.pyo
 
-# Virtual environments
-.venv
+# Data — too large for git
+data/raw/
+data/vector_store/
+
+# MLflow
+mlflow_artifacts/
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Build
+dist/
+*.egg-info/
+
+# OS
 .DS_Store
 **/.DS_Store
-**/.DS_Store
+
+# Python
+*.pyo
+*.pyd
+.Python
+
+# uv
+.python-version
