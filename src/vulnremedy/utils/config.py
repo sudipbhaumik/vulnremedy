@@ -14,6 +14,20 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
+    # RAG Chunking Configuration
+    chunk_max_length: int = Field(
+        default=1000,
+        description="Maximum characters per chunk"
+    )
+    chunk_min_length: int = Field(
+        default=50,
+        description="Minimum characters for a chunk to be kept"
+    )
+    chunk_overlap: int = Field(
+        default=100,
+        description="Character overlap between chunks for context preservation"
+    )
+
     # LLM
     ollama_base_url: str = Field(default="http://localhost:11434")
     llm_model: str = Field(default="llama3.1:8b")
