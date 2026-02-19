@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     )
     nvd_api_key: str = Field(default="")
 
+    # OSV API
+    osv_api_base_url: str = Field(
+        default="https://api.osv.dev/v1"
+    )
+
     # Vector Store
     chroma_persist_dir: str = Field(default="./data/vector_store")
     chroma_collection_name: str = Field(default="depshield_knowledge")
