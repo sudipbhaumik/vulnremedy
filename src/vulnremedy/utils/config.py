@@ -74,6 +74,14 @@ class Settings(BaseSettings):
         description="Weight for keyword search in hybrid retrieval (0.0-1.0)"
     )
 
+    # Reranker Configuration
+    reranker_relevance_threshold: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Minimum relevance score to keep results (0.0-1.0)"
+    )
+
     # LLM
     ollama_base_url: str = Field(default="http://localhost:11434")
     llm_model: str = Field(default="llama3.1:8b")
