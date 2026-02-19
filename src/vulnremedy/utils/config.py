@@ -21,6 +21,12 @@ class Settings(BaseSettings):
 
     # External APIs
     github_token: str = Field(default="")
+   
+
+    # NVD API
+    nvd_api_base_url: str = Field(
+        default="https://services.nvd.nist.gov/rest/json/cves/2.0"
+    )
     nvd_api_key: str = Field(default="")
 
     # Vector Store
