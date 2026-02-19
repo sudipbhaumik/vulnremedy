@@ -13,7 +13,7 @@ data/embeddings_cache/*.json  # ← Cache files, not the directory itself
 
 # But keep directory structure visible
 !data/embeddings_cache/.gitkeep
-
+!data/vector_store/.gitkeep
 # MLflow
 mlflow_artifacts/
 

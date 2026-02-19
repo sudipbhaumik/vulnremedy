@@ -28,7 +28,7 @@ class Settings(BaseSettings):
         description="Character overlap between chunks for context preservation"
     )
 
-# Embedding Configuration
+    # Embedding Configuration
     embedding_model: str = Field(
         default="nomic-embed-text",
         description="Ollama embedding model name"
@@ -40,6 +40,24 @@ class Settings(BaseSettings):
     embedding_cache_dir: str = Field(
         default="./data/embeddings_cache",
         description="Directory to cache embeddings"
+    )
+
+    # Retrieval Configuration
+    retrieval_top_k: int = Field(
+        default=10,
+        description="Number of chunks to retrieve from vector search"
+    )
+    retrieval_batch_size: int = Field(
+        default=100,
+        description="Batch size for adding chunks to vector store"
+    )
+    retrieval_metadata_limit: int = Field(
+        default=100,
+        description="Maximum results for metadata-only searches"
+    )
+    retrieval_stats_sample_size: int = Field(
+        default=100,
+        description="Number of documents to sample for stats"
     )
     
     # LLM
@@ -64,7 +82,7 @@ class Settings(BaseSettings):
 
     # Vector Store
     chroma_persist_dir: str = Field(default="./data/vector_store")
-    chroma_collection_name: str = Field(default="depshield_knowledge")
+    chroma_collection_name: str = Field(default="vulremedy_knowledge")
 
     # MLflow
     mlflow_tracking_uri: str = Field(default="http://localhost:5001")
