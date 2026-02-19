@@ -28,6 +28,20 @@ class Settings(BaseSettings):
         description="Character overlap between chunks for context preservation"
     )
 
+# Embedding Configuration
+    embedding_model: str = Field(
+        default="nomic-embed-text",
+        description="Ollama embedding model name"
+    )
+    embedding_batch_size: int = Field(
+        default=10,
+        description="Number of chunks to embed per batch"
+    )
+    embedding_cache_dir: str = Field(
+        default="./data/embeddings_cache",
+        description="Directory to cache embeddings"
+    )
+    
     # LLM
     ollama_base_url: str = Field(default="http://localhost:11434")
     llm_model: str = Field(default="llama3.1:8b")
