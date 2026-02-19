@@ -60,6 +60,20 @@ class Settings(BaseSettings):
         description="Number of documents to sample for stats"
     )
     
+    # Hybrid Retrieval Weights
+    retrieval_vector_weight: float = Field(
+        default=0.7,
+        ge=0.0,
+        le=1.0,
+        description="Weight for vector search in hybrid retrieval (0.0-1.0)"
+    )
+    retrieval_keyword_weight: float = Field(
+        default=0.3,
+        ge=0.0,
+        le=1.0,
+        description="Weight for keyword search in hybrid retrieval (0.0-1.0)"
+    )
+
     # LLM
     ollama_base_url: str = Field(default="http://localhost:11434")
     llm_model: str = Field(default="llama3.1:8b")
