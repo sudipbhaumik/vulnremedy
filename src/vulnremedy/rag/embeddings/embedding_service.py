@@ -169,19 +169,27 @@ class EmbeddingService:
             # Embed chunks that weren't in cache
             if batch_to_embed:
                 embeddings = self._embed_batch([c.text for c in batch_to_embed])
-                
-                for chunk, embedding in zip(batch_to_embed, embeddings):
-                    # Add to cache
-                    cache_key = self._get_cache_key(chunk.text)
-                    self._cache[cache_key] = embedding
-                    
-                    embedded_chunks.append(
-                        EmbeddedChunk(
-                            text=chunk.text,
-                            embedding=embedding,
-                            metadata=chunk.metadata
-                        )
+                # Handle case where some embeddings failed (list length mismatch)
+                if len(embeddings) != len(batch_to_embed):
+                    logger.warning(
+                        f"Only {len(embeddings)}/{len(batch_to_embed)} chunks embedded successfully, "
+                        f"skipping {len(batch_to_embed) - len(embeddings)} failed chunks"
                     )
+
+                # Only add successfully embedded chunks
+                for idx, (chunk, embedding) in enumerate(zip(batch_to_embed, embeddings)):
+                    if embedding:  # Check if embedding is not None
+                        # Add to cache
+                        cache_key = self._get_cache_key(chunk.text)
+                        self._cache[cache_key] = embedding
+                        
+                        embedded_chunks.append(
+                            EmbeddedChunk(
+                                text=chunk.text,
+                                embedding=embedding,
+                                metadata=chunk.metadata
+                            )
+                        )
             
             processed += len(batch)
             
@@ -211,33 +219,31 @@ class EmbeddingService:
         Embed a batch of texts using Ollama API.
         
         This method is decorated with @retry for resilience.
+        Skips texts that fail to embed after retries.
         
         Args:
             texts: List of text strings to embed
         
         Returns:
-            List of embedding vectors (one per text)
+            List of embedding vectors (one per successfully embedded text)
         """
         url = f"{self.ollama_base_url}/api/embeddings"
         
         embeddings = []
         
         # Ollama's embedding API processes one text at a time
-        # We call it multiple times within one batch for efficiency
-        for text in texts:
+        for idx, text in enumerate(texts):
+            # Store original length before truncation
+            original_length = len(text)
+            
             # Truncate very long texts to avoid Ollama crashes
-            # nomic-embed-text supports ~8000 tokens (~32000 chars)
-            # We limit to 8000 chars to be safe
             max_length = settings.embedding_max_length
             if len(text) > max_length:
                 logger.warning(
-                    f"Text too long for embedding {max_length}, truncating to 8000 chars: "
-                    f"{text[:100]}..."
+                    f"Text {idx} exceeds {max_length} chars ({len(text)}), truncating"
                 )
                 text = text[:max_length] + "... [truncated]"
-
-            # Debug logging
-            logger.debug(f"Embedding text of length {len(text)} chars")
+            
             payload = {
                 "model": self.embedding_model,
                 "prompt": text
@@ -246,17 +252,24 @@ class EmbeddingService:
             try:
                 response = self.client.post(url, json=payload)
                 response.raise_for_status()
-            except httpx.HTTPStatusError as e:
-                logger.error(f"Ollama embedding failed for text (len={len(text)}): {text[:200]}...")
-                raise
-            
-            data = response.json()
-            embedding = data.get("embedding")
-            
-            if not embedding:
-                raise ValueError(f"No embedding returned from Ollama for text: {text[:100]}")
-            
-            embeddings.append(embedding)
+                
+                data = response.json()
+                embedding = data.get("embedding")
+                
+                if not embedding:
+                    logger.warning(f"No embedding returned for text {idx}, skipping")
+                    continue
+                
+                embeddings.append(embedding)
+                
+            except (httpx.HTTPStatusError, httpx.TimeoutException) as e:
+                logger.warning(
+                    f"Failed to embed text {idx} (original length: {original_length}, "
+                    f"final length: {len(text)}). Error: {type(e).__name__}. "
+                    f"Preview: {text[:200]}..."
+                )
+                # Skip this text and continue with the rest
+                continue
         
         return embeddings
     
