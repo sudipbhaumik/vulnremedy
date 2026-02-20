@@ -7,8 +7,15 @@ __pycache__/
 
 # Data — too large for git
 data/raw/
+data/processed/
 data/vector_store/
+data/embeddings_cache/*.json  # ← Cache files, not the directory itself
+# Embedding cache — exclude cache files
+data/embeddings_cache/*.json
 
+# But keep directory structure visible
+!data/embeddings_cache/.gitkeep
+!data/vector_store/.gitkeep
 # MLflow
 mlflow_artifacts/
 
