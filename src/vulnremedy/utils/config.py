@@ -41,6 +41,10 @@ class Settings(BaseSettings):
         default="./data/embeddings_cache",
         description="Directory to cache embeddings"
     )
+    embedding_max_length: int = Field(
+        default=8000,
+        description="Maximum characters per text for embedding (truncate longer texts)"
+    )
 
     # Retrieval Configuration
     retrieval_top_k: int = Field(

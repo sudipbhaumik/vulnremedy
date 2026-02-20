@@ -225,13 +225,30 @@ class EmbeddingService:
         # Ollama's embedding API processes one text at a time
         # We call it multiple times within one batch for efficiency
         for text in texts:
+            # Truncate very long texts to avoid Ollama crashes
+            # nomic-embed-text supports ~8000 tokens (~32000 chars)
+            # We limit to 8000 chars to be safe
+            max_length = settings.embedding_max_length
+            if len(text) > max_length:
+                logger.warning(
+                    f"Text too long for embedding {max_length}, truncating to 8000 chars: "
+                    f"{text[:100]}..."
+                )
+                text = text[:max_length] + "... [truncated]"
+
+            # Debug logging
+            logger.debug(f"Embedding text of length {len(text)} chars")
             payload = {
                 "model": self.embedding_model,
                 "prompt": text
             }
             
-            response = self.client.post(url, json=payload)
-            response.raise_for_status()
+            try:
+                response = self.client.post(url, json=payload)
+                response.raise_for_status()
+            except httpx.HTTPStatusError as e:
+                logger.error(f"Ollama embedding failed for text (len={len(text)}): {text[:200]}...")
+                raise
             
             data = response.json()
             embedding = data.get("embedding")
