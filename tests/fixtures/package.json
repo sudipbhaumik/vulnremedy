@@ -1,0 +1,32 @@
+{
+  "name": "vulnerable-app",
+  "version": "1.0.0",
+  "description": "Sample package.json for parser testing",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "lodash": "4.17.20",
+    "express": "4.17.1",
+    "axios": "^0.21.1",
+    "moment": "2.29.1",
+    "minimist": "~1.2.5",
+    "ansi-regex": "latest",
+    "follow-redirects": "*"
+  },
+  "devDependencies": {
+    "jest": "^27.0.0",
+    "eslint": "7.32.0",
+    "webpack": "^5.0.0",
+    "nodemon": "~2.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
+  },
+  "optionalDependencies": {
+    "fsevents": "~2.3.2"
+  }
+}
