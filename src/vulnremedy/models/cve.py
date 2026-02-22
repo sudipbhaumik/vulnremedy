@@ -26,6 +26,7 @@ class Ecosystem(str, Enum):
     String enum allows direct comparison: ecosystem == "maven" works naturally.
     """
     MAVEN = "maven"
+    GRADLE = "gradle"
     NPM = "npm"
     PYPI = "pypi"
     GO = "go"

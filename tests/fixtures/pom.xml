@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Sample pom.xml for parser testing.
+
+  Deliberately includes:
+    - compile-scope dependencies (the default, and explicit)
+    - test-scope dependency
+    - provided-scope dependency
+    - runtime-scope dependency
+    - A dependency WITHOUT explicit <scope> (defaults to compile)
+    - log4j-core 2.14.1 — affected by CVE-2021-44228 (Log4Shell)
+    - spring-core 5.3.18 — affected by CVE-2022-22965 (Spring4Shell)
+    - A dependency with a property-interpolated version (${junit.version})
+      to exercise the parser's property substitution path
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>vulnerable-app</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <java.version>11</java.version>
+        <junit.version>4.13.1</junit.version>
+    </properties>
+
+    <dependencies>
+
+        <!-- CVE-2021-44228: Log4Shell — CRITICAL -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.14.1</version>
+            <!-- no <scope> tag — defaults to compile -->
+        </dependency>
+
+        <!-- CVE-2022-22965: Spring4Shell — CRITICAL -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>5.3.18</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- CVE-2021-42550: logback — MEDIUM -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.2.7</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Servlet API — provided by container, should still be scanned -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Test dependency — should be captured with scope=test -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Commons-text — CVE-2022-42889 (Text4Shell) -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.9</version>
+        </dependency>
+
+    </dependencies>
+
+</project>

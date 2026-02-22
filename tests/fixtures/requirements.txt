@@ -1,0 +1,66 @@
+# Sample requirements.txt for parser testing.
+#
+# Deliberately includes:
+#   - Pinned exact versions:           package==version
+#   - Range constraints:               package>=version,<version
+#   - Compatible release:              package~=version
+#   - Extras:                          package[extra]==version
+#   - No version (unpinned):           package
+#   - Environment markers:             package==version ; python_version >= "3.8"
+#   - Inline comments:                 package==version  # some note
+#   - Line continuations:              package==version \
+#                                          --hash=sha256:abc
+#   - Options/flags (must be skipped): -r base.txt, --index-url, -e git+...
+#   - URL requirements (skipped):      https://example.com/package.whl
+#
+# Known-vulnerable packages for CVE matching validation:
+#   - Pillow 9.1.0       → CVE-2022-22817 (arbitrary code execution)
+#   - PyYAML 5.3.1       → CVE-2020-14343 (arbitrary code execution)
+#   - Django 2.2.0       → CVE-2019-14234 (SQL injection)
+#   - cryptography 3.4.6 → CVE-2023-23931 (memory corruption)
+#   - urllib3 1.26.4     → CVE-2021-33503 (ReDoS)
+
+# ---- Options and flags (parser must skip these) ----
+--index-url https://pypi.org/simple/
+--extra-index-url https://private.example.com/simple/
+-r base.txt
+-c constraints.txt
+
+# ---- URL requirement (parser must skip) ----
+https://example.com/some_package-1.0-py3-none-any.whl
+
+# ---- Editable install (parser must skip) ----
+-e git+https://github.com/example/repo.git@main#egg=mypackage
+
+# ---- Pinned exact versions ----
+Pillow==9.1.0
+PyYAML==5.3.1
+Django==2.2.0
+cryptography==3.4.6
+urllib3==1.26.4
+requests==2.25.0
+
+# ---- Range constraints (keep full specifier as version) ----
+SQLAlchemy>=1.4.0,<2.0.0
+boto3>=1.20.0
+
+# ---- Compatible release operator ----
+celery~=5.2.3
+
+# ---- Extras (strip extras from name, keep version) ----
+requests[security]==2.28.0
+uvicorn[standard]==0.17.6
+
+# ---- Unpinned (no version constraint) ----
+six
+
+# ---- Environment marker (strip marker, keep package+version) ----
+pywin32==304 ; sys_platform == "win32"
+importlib-metadata==4.8.3 ; python_version < "3.10"
+
+# ---- Inline comment ----
+numpy==1.21.0  # pinned for reproducibility
+
+# ---- Line continuation with hash (keep package, ignore hash) ----
+certifi==2022.12.7 \
+    --hash=sha256:35824b4c3a97115964b408844d64aa14db1cc518f6562e8d7261699d1350a9e3

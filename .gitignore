@@ -38,3 +38,5 @@ dist/
 
 # uv
 .python-version
+CLAUDE.md
+.claude

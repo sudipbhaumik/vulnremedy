@@ -86,6 +86,15 @@ class Settings(BaseSettings):
         description="Minimum relevance score to keep results (0.0-1.0)"
     )
 
+    # GitHub Configuration
+    github_api_base_url: str = Field(
+        default="https://api.github.com",
+        description="GitHub API base URL"
+    )
+    github_token: str = Field(
+        default="",
+        description="GitHub personal access token for API access"
+    )
     # LLM
     ollama_base_url: str = Field(default="http://localhost:11434")
     llm_model: str = Field(default="llama3.1:8b")
