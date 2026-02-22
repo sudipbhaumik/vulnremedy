@@ -14,6 +14,7 @@ import re
 from typing import Optional
 from uuid import UUID, uuid4
 
+from vulnremedy.models.dependency import Dependency
 from vulnremedy.models.cve import CVERecord, CVSSScore, Severity
 from vulnremedy.models.dependency import Dependency
 from vulnremedy.models.finding import Finding, FindingStatus
@@ -226,12 +227,22 @@ class CVEAnalystAgent:
             version=dep.version,
             ecosystem=dep.ecosystem.value,
         )
+        try:
+            results = self.retriever.retrieve(
+                query=query,
+                top_k=5,
+                filters=filters
+            )
+        except Exception as e:
+        # If filtering fails (e.g., no ecosystems field), try without filter
+            logger.warning(f"Ecosystem filter failed, retrying without filter: {e}")
+            results = self.retriever.retrieve(
+                query=query,
+                top_k=5,
+                filters={}
+            )
 
-        return self.retriever.retrieve(
-            query=query,
-            top_k=5,
-            filters=filters,
-        )
+        return results
 
     def _create_finding(
         self,

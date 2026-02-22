@@ -95,6 +95,12 @@ class CVEChunker:
             List of CVEChunk objects
         """
         chunks = []
+        # Extract ecosystems from affected packages
+        ecosystems = list(set(
+            pkg.ecosystem.value 
+            for pkg in cve.affected_packages 
+            if pkg.ecosystem
+        ))
         
         # Base metadata for all chunks from this CVE
         base_metadata = {
@@ -102,6 +108,10 @@ class CVEChunker:
             "severity": cve.severity.value,
             "source": cve.source,
         }
+
+        # Only add ecosystems if non-empty (ChromaDB doesn't allow empty lists)
+        if ecosystems:
+            base_metadata["ecosystems"] = ecosystems
         
         # Chunk 1+: Description (returns list now, not single chunk)
         description_chunks = self._create_description_chunk(cve, base_metadata)
