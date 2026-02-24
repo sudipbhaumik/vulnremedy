@@ -158,6 +158,25 @@ class Settings(BaseSettings):
         description="Minimum seconds between consecutive LLM calls"
     )
 
+    # Remediation Planner Guardrails
+    remediation_max_field_chars: int = Field(
+        default=2000,
+        description="Maximum characters for LLM strategy text fields before truncation"
+    )
+    remediation_max_list_items: int = Field(
+        default=10,
+        description="Maximum items in LLM-generated lists (breaking_changes, testing_plan, etc.)"
+    )
+    remediation_circuit_breaker_max_failures: int = Field(
+        default=3,
+        description="Consecutive LLM failures before remediation circuit breaker opens"
+    )
+    remediation_rate_limit_interval_seconds: float = Field(
+        default=0.5,
+        ge=0.0,
+        description="Minimum seconds between consecutive remediation LLM calls"
+    )
+
     # Environment
     environment: str = Field(default="development")
 

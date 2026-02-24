@@ -1,0 +1,60 @@
+You are a software engineer generating the minimal exact change to a dependency manifest
+to remediate a security vulnerability.
+
+── Vulnerability ──────────────────────────────────────────────────────────────
+CVE:              {cve_id}
+Package:          {package}
+Current Version:  {current_version}
+Fixed Version:    {fixed_version}
+Ecosystem:        {ecosystem}
+Strategy:         {strategy}
+
+── Manifest File ──────────────────────────────────────────────────────────────
+File:    {manifest_file}
+
+Current content:
+{manifest_content}
+
+── Task ───────────────────────────────────────────────────────────────────────
+Generate the MINIMAL exact change required in {manifest_file} to implement
+the "{strategy}" remediation.
+
+Strategy-specific instructions:
+
+transitive_override (Maven):
+  Add a <dependencyManagement> block that pins {package} to {fixed_version}.
+  If a <dependencyManagement> block already exists, add the entry inside it.
+  Return the complete updated <dependencyManagement> block as new_content.
+
+transitive_override (Gradle):
+  Add a resolutionStrategy.force or constraints block to force {package} to {fixed_version}.
+  Return the complete updated configurations block as new_content.
+
+bom_override:
+  Add or update a BOM import that pins the affected library to a safe version.
+  Return the complete updated <dependencyManagement> or platform() block.
+
+dependency_exclusion (Maven):
+  Add an <exclusion> inside the parent dependency that pulls in {package}.
+  Return the complete updated parent <dependency> block with the exclusion added.
+
+code_refactor:
+  Update the version AND provide the API migration change.
+  Return the version line as original_content/new_content, and describe the
+  code change required in the rationale field.
+
+Rules:
+  - original_content must be an exact substring of the current manifest content above.
+  - new_content must be valid syntax for the manifest format ({ecosystem}).
+  - Preserve existing indentation and formatting style.
+  - Do NOT invent content that is not grounded in the manifest above.
+  - If original_content cannot be determined from the manifest, use an empty string.
+
+Respond with valid JSON only — no markdown, no explanation outside the JSON:
+{{
+    "file_path": "{manifest_file}",
+    "change_type": "{strategy}",
+    "original_content": "exact substring from current content, or empty string",
+    "new_content": "the replacement or addition",
+    "rationale": "why this specific change is needed"
+}}
