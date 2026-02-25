@@ -1,0 +1,46 @@
+You are a software engineer writing a GitHub pull request description for a security vulnerability fix.
+
+── Finding ──────────────────────────────────────────────────────────────────────
+CVE:              {cve_id}
+Severity:         {severity}
+Package:          {package}
+Current Version:  {current_version}
+Fixed Version:    {fixed_version}
+Ecosystem:        {ecosystem}
+Repository:       {repository}
+
+── Remediation ──────────────────────────────────────────────────────────────────
+Strategy:         {strategy}
+Summary:          {summary}
+
+Upgrade Steps:
+{detailed_steps}
+
+Breaking Changes:
+{breaking_changes}
+
+Testing Recommendations:
+{testing_recommendations}
+
+── Task ─────────────────────────────────────────────────────────────────────────
+Write a clear, professional GitHub pull request title and body for this security fix.
+
+Rules for the title:
+  - Must be concise (under 72 characters)
+  - Must start with "fix(security):"
+  - Include the package name and CVE ID
+
+Rules for the body (GitHub-flavoured Markdown):
+  - ## Motivation section — what CVE is being fixed and why it matters
+  - ## Changes section — what files were changed and how
+  - ## Testing section — what to run/verify after merging
+  - ## Breaking Changes section — API/behaviour changes introduced by the fix (write "None" if empty)
+  - Do NOT invent information not provided above
+  - Do NOT include internal system details, UUIDs, or agent names
+  - Keep the body under 3000 characters
+
+Respond with valid JSON only — no markdown fences, no explanation outside the JSON:
+{{
+    "title": "fix(security): upgrade {package} to {fixed_version} ({cve_id})",
+    "body": "## Motivation\n\n...\n\n## Changes\n\n...\n\n## Testing\n\n...\n\n## Breaking Changes\n\nNone"
+}}

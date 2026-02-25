@@ -177,6 +177,156 @@ class GitHubClient:
             # Single file response
             return [data] if data["type"] == "file" else []
     
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type(httpx.HTTPError),
+    )
+    def get_branch_sha(self, repo: str, branch: str) -> str:
+        """
+        Get the current HEAD SHA of a branch.
+
+        Args:
+            repo: Repository in format "owner/repo"
+            branch: Branch name
+
+        Returns:
+            SHA string of the branch HEAD commit
+        """
+        url = f"/repos/{repo}/git/ref/heads/{branch}"
+        response = self.client.get(url)
+        response.raise_for_status()
+        return response.json()["object"]["sha"]
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type(httpx.HTTPError),
+    )
+    def create_branch(self, repo: str, branch_name: str, source_sha: str) -> None:
+        """
+        Create a new branch from a given commit SHA.
+
+        Args:
+            repo: Repository in format "owner/repo"
+            branch_name: New branch name (e.g. "fix/cve-2021-44228-20240224")
+            source_sha: SHA to branch from (typically from get_branch_sha)
+        """
+        url = f"/repos/{repo}/git/refs"
+        payload = {"ref": f"refs/heads/{branch_name}", "sha": source_sha}
+        response = self.client.post(url, json=payload)
+        response.raise_for_status()
+        logger.debug("Branch created", repo=repo, branch=branch_name, sha=source_sha[:8])
+
+    def get_file_sha(
+        self, repo: str, file_path: str, branch: str
+    ) -> Optional[str]:
+        """
+        Get the blob SHA of an existing file.
+
+        Required when updating a file via the Contents API — GitHub
+        rejects updates that omit the existing file SHA.
+
+        Args:
+            repo: Repository in format "owner/repo"
+            file_path: Path to file (e.g. "pom.xml")
+            branch: Branch name
+
+        Returns:
+            SHA string if the file exists, None otherwise
+        """
+        url = f"/repos/{repo}/contents/{file_path}"
+        params = {"ref": branch}
+        response = self.client.get(url, params=params)
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
+        return response.json().get("sha")
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type(httpx.HTTPError),
+    )
+    def create_or_update_file(
+        self,
+        repo: str,
+        file_path: str,
+        message: str,
+        content: str,
+        branch: str,
+        existing_sha: Optional[str] = None,
+    ) -> str:
+        """
+        Create or update a file via the GitHub Contents API.
+
+        Args:
+            repo: Repository in format "owner/repo"
+            file_path: Path to the file
+            message: Commit message
+            content: New file content (plain text — will be base64-encoded internally)
+            branch: Branch to commit to
+            existing_sha: Current file SHA (required for updates, omit for new files)
+
+        Returns:
+            New blob SHA of the committed file
+        """
+        url = f"/repos/{repo}/contents/{file_path}"
+        payload: dict[str, Any] = {
+            "message": message,
+            "content": base64.b64encode(content.encode("utf-8")).decode("ascii"),
+            "branch": branch,
+        }
+        if existing_sha:
+            payload["sha"] = existing_sha
+        response = self.client.put(url, json=payload)
+        response.raise_for_status()
+        new_sha: str = response.json()["content"]["sha"]
+        logger.debug(
+            "File committed",
+            repo=repo,
+            file_path=file_path,
+            branch=branch,
+            sha=new_sha[:8],
+        )
+        return new_sha
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type(httpx.HTTPError),
+    )
+    def create_pull_request(
+        self,
+        repo: str,
+        title: str,
+        body: str,
+        head: str,
+        base: str = "main",
+    ) -> dict[str, Any]:
+        """
+        Open a pull request.
+
+        Args:
+            repo: Repository in format "owner/repo"
+            title: PR title
+            body: PR body (Markdown)
+            head: Source branch name
+            base: Target branch (default: "main")
+
+        Returns:
+            Dict with keys: number (int), url (str)
+        """
+        url = f"/repos/{repo}/pulls"
+        payload = {"title": title, "body": body, "head": head, "base": base}
+        response = self.client.post(url, json=payload)
+        response.raise_for_status()
+        data = response.json()
+        pr_number: int = data["number"]
+        pr_url: str = data["html_url"]
+        logger.info("Pull request created", repo=repo, number=pr_number, url=pr_url)
+        return {"number": pr_number, "url": pr_url}
+
     def get_rate_limit(self) -> dict[str, Any]:
         """
         Get current rate limit status.

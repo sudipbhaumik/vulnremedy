@@ -1,5 +1,7 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pathlib import Path
+
 from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -127,12 +129,94 @@ class Settings(BaseSettings):
     api_port: int = Field(default=8000)
     log_level: str = Field(default="INFO")
 
+    # Prompt templates
+    prompt_templates_dir: str = Field(
+        default="prompts",
+        description="Directory containing prompt template files"
+    )
+
+    # Impact Assessor Guardrails
+    guardrails_max_reasoning_chars: int = Field(
+        default=1000,
+        description="Maximum characters for LLM reasoning field before truncation"
+    )
+    guardrails_max_business_impact_chars: int = Field(
+        default=500,
+        description="Maximum characters for LLM business_impact field before truncation"
+    )
+    guardrails_max_chunk_chars: int = Field(
+        default=2000,
+        description="Maximum characters per RAG chunk before truncation"
+    )
+    guardrails_circuit_breaker_max_failures: int = Field(
+        default=3,
+        description="Consecutive LLM failures before circuit breaker opens"
+    )
+    guardrails_rate_limit_interval_seconds: float = Field(
+        default=0.5,
+        ge=0.0,
+        description="Minimum seconds between consecutive LLM calls"
+    )
+
+    # Remediation Planner Guardrails
+    remediation_max_field_chars: int = Field(
+        default=2000,
+        description="Maximum characters for LLM strategy text fields before truncation"
+    )
+    remediation_max_list_items: int = Field(
+        default=10,
+        description="Maximum items in LLM-generated lists (breaking_changes, testing_plan, etc.)"
+    )
+    remediation_circuit_breaker_max_failures: int = Field(
+        default=3,
+        description="Consecutive LLM failures before remediation circuit breaker opens"
+    )
+    remediation_rate_limit_interval_seconds: float = Field(
+        default=0.5,
+        ge=0.0,
+        description="Minimum seconds between consecutive remediation LLM calls"
+    )
+
+    # PR Creator Guardrails
+    pr_creator_max_title_chars: int = Field(
+        default=200,
+        description="Maximum characters for LLM-generated PR title before truncation"
+    )
+    pr_creator_max_body_chars: int = Field(
+        default=5000,
+        description="Maximum characters for LLM-generated PR body before truncation"
+    )
+    pr_creator_circuit_breaker_max_failures: int = Field(
+        default=3,
+        description="Consecutive LLM failures before PR creator circuit breaker opens"
+    )
+    pr_creator_rate_limit_interval_seconds: float = Field(
+        default=0.5,
+        ge=0.0,
+        description="Minimum seconds between consecutive PR description LLM calls"
+    )
+
     # Environment
     environment: str = Field(default="development")
 
     @property
     def is_development(self) -> bool:
         return self.environment == "development"
+
+    def load_prompt(self, filename: str) -> str:
+        """Load a prompt template from the prompt_templates_dir.
+
+        Args:
+            filename: File name within the prompts directory (e.g. "impact_assessor_exploitability.txt").
+
+        Returns:
+            Raw template string with {placeholder} variables.
+
+        Raises:
+            FileNotFoundError: If the template file does not exist.
+        """
+        path = Path(self.prompt_templates_dir) / filename
+        return path.read_text(encoding="utf-8")
 
 
 # Singleton — import this everywhere, never instantiate Settings directly
