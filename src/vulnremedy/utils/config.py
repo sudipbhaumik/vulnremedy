@@ -177,6 +177,25 @@ class Settings(BaseSettings):
         description="Minimum seconds between consecutive remediation LLM calls"
     )
 
+    # PR Creator Guardrails
+    pr_creator_max_title_chars: int = Field(
+        default=200,
+        description="Maximum characters for LLM-generated PR title before truncation"
+    )
+    pr_creator_max_body_chars: int = Field(
+        default=5000,
+        description="Maximum characters for LLM-generated PR body before truncation"
+    )
+    pr_creator_circuit_breaker_max_failures: int = Field(
+        default=3,
+        description="Consecutive LLM failures before PR creator circuit breaker opens"
+    )
+    pr_creator_rate_limit_interval_seconds: float = Field(
+        default=0.5,
+        ge=0.0,
+        description="Minimum seconds between consecutive PR description LLM calls"
+    )
+
     # Environment
     environment: str = Field(default="development")
 

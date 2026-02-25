@@ -221,6 +221,150 @@ class GitHubTool:
                 "error": f"Failed to find manifests: {str(e)}"
             }
     
+    def create_branch(
+        self,
+        repo: str,
+        branch_name: str,
+        from_branch: str = "main",
+    ) -> dict[str, str | bool]:
+        """
+        Create a new branch off an existing branch.
+
+        Args:
+            repo: Repository in format "owner/repo"
+            branch_name: Name for the new branch (e.g. "fix/cve-2021-44228-20240224")
+            from_branch: Source branch (default: "main")
+
+        Returns:
+            Dictionary with:
+                - success: bool
+                - branch: str (new branch name, if success=True)
+                - sha: str (source SHA used, if success=True)
+                - error: str (if success=False)
+        """
+        if "/" not in repo:
+            return {"success": False, "error": f"Invalid repo format: '{repo}'"}
+
+        try:
+            sha = self.client.get_branch_sha(repo, from_branch)
+            self.client.create_branch(repo, branch_name, sha)
+            logger.info(
+                "GitHub Tool: branch created",
+                repo=repo,
+                branch=branch_name,
+                from_branch=from_branch,
+            )
+            return {"success": True, "branch": branch_name, "sha": sha}
+        except Exception as e:
+            logger.error(
+                "Failed to create branch",
+                repo=repo,
+                branch_name=branch_name,
+                from_branch=from_branch,
+                error=str(e),
+            )
+            return {"success": False, "error": f"Failed to create branch '{branch_name}': {e}"}
+
+    def update_file(
+        self,
+        repo: str,
+        file_path: str,
+        content: str,
+        commit_message: str,
+        branch: str,
+    ) -> dict[str, str | bool]:
+        """
+        Create or update a file on a branch.
+
+        Automatically fetches the existing file SHA so callers do not
+        need to track it separately.
+
+        Args:
+            repo: Repository in format "owner/repo"
+            file_path: Path to the file relative to repo root
+            content: New full file content (plain text)
+            commit_message: Git commit message
+            branch: Branch to commit to
+
+        Returns:
+            Dictionary with:
+                - success: bool
+                - sha: str (new blob SHA, if success=True)
+                - error: str (if success=False)
+        """
+        if "/" not in repo:
+            return {"success": False, "error": f"Invalid repo format: '{repo}'"}
+
+        try:
+            existing_sha = self.client.get_file_sha(repo, file_path, branch)
+            new_sha = self.client.create_or_update_file(
+                repo=repo,
+                file_path=file_path,
+                message=commit_message,
+                content=content,
+                branch=branch,
+                existing_sha=existing_sha,
+            )
+            logger.info(
+                "GitHub Tool: file updated",
+                repo=repo,
+                file_path=file_path,
+                branch=branch,
+            )
+            return {"success": True, "sha": new_sha}
+        except Exception as e:
+            logger.error(
+                "Failed to update file",
+                repo=repo,
+                file_path=file_path,
+                branch=branch,
+                error=str(e),
+            )
+            return {"success": False, "error": f"Failed to update '{file_path}': {e}"}
+
+    def create_pull_request(
+        self,
+        repo: str,
+        title: str,
+        body: str,
+        head: str,
+        base: str = "main",
+    ) -> dict[str, str | int | bool]:
+        """
+        Open a pull request.
+
+        Args:
+            repo: Repository in format "owner/repo"
+            title: PR title
+            body: PR body (Markdown)
+            head: Source branch name
+            base: Target branch (default: "main")
+
+        Returns:
+            Dictionary with:
+                - success: bool
+                - number: int (PR number, if success=True)
+                - url: str (PR HTML URL, if success=True)
+                - error: str (if success=False)
+        """
+        if "/" not in repo:
+            return {"success": False, "error": f"Invalid repo format: '{repo}'"}
+
+        try:
+            pr_data = self.client.create_pull_request(
+                repo=repo, title=title, body=body, head=head, base=base
+            )
+            return {"success": True, **pr_data}
+        except Exception as e:
+            logger.error(
+                "Failed to create pull request",
+                repo=repo,
+                head=head,
+                base=base,
+                error=str(e),
+            )
+            return {"success": False, "error": f"Failed to create PR: {e}"}
+
     def _get_manifest_type(self, filename: str) -> str:
         """Map manifest filename to ecosystem type."""
         manifest_types = {
